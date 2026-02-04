@@ -14,6 +14,7 @@ def run_inference(image_path):
 
 # =============================
 # MAIN
+#hello
 # =============================
 if __name__ == "__main__":
 
