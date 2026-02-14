@@ -1,6 +1,6 @@
 import cv2 as cv
 from ultralytics import YOLO
-img= cv.imread('photos/millie.jpg')
+img= cv.imread('../photos/millie.jpg')
 
 
 # Load YOLOv8 pretrained model
