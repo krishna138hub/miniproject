@@ -38,3 +38,5 @@ def detecthands(frame):
 
             # Draw landmarks
             mp_draw.draw_landmarks(frame, handLms, mp_hands.HAND_CONNECTIONS)
+
+    return results
