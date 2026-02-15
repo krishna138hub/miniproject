@@ -2,6 +2,7 @@ import cv2
 from objectdetection.hands import detecthands
 from objectdetection.waste import detectwaste
 from objectdetection.waste_tracking import WasteTracker
+from objectdetection.face import detectface
 
 
 def main():
@@ -23,6 +24,7 @@ def main():
 
         # Detect hands and waste
         hand_results = detecthands(frame)
+        face_results = detectface(frame)
         waste_results = detectwaste(frame)
 
         # Update waste tracking and detect littering
