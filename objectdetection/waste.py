@@ -10,9 +10,10 @@ model = YOLO(model_path)
 
 
 def detectwaste(frame):
-    results = model(frame)
+    results = model(frame,conf=0.60)
     h, w, _ = frame.shape
     print(h)
+
 
     # Draw rectangles around detected waste objects
     for result in results:

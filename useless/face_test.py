@@ -5,11 +5,11 @@ mp_face = mp.solutions.face_detection
 
 # Initialize detector
 face_detector = mp_face.FaceDetection(
-    model_selection=0,
+    model_selection=1,
     min_detection_confidence=0.6
 )
 
-img = cv.imread("../photos/millie.jpg")
+img = cv.imread("../photos/woman2.jfif")
 if img is None:
     print("Image not found")
     exit()

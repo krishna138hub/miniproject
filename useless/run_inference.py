@@ -5,6 +5,7 @@ from ultralytics import YOLO
 def run_inference(image_path):
     model_path = "best.pt"
     model = YOLO(model_path)
+    print(model.names)
 
     results = model(image_path)
     for result in results:
@@ -12,10 +13,12 @@ def run_inference(image_path):
         result.show()
         result.save()
 
+
+
 # =============================
 # MAIN
 #hello
 # =============================
 if __name__ == "__main__":
 
-    run_inference("photos/roitest.jpeg")
+    run_inference("photos1/waste.avif")

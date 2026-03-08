@@ -1,6 +1,6 @@
 import cv2 as cv
 from ultralytics import YOLO
-img= cv.imread('../photos/millie.jpg')
+img= cv.imread('photos1/person.jpg')
 
 
 # Load YOLOv8 pretrained model
@@ -8,7 +8,7 @@ model = YOLO('yolov8m.pt')   # nano model (fast, good for students)
 
 
 # Run detection
-results = model(img)
+results = model(img,conf=0.15)
 
 
 # Draw detections

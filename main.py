@@ -15,7 +15,9 @@ def main():
     waste_tracker = WasteTracker(separation_threshold=80, littering_time_threshold=2.0)
 
     # Video input (change to 0 for webcam)
-    cap = cv2.VideoCapture("photos/input4.mp4")
+    url = "http://192.168.0.6:8080/video"
+    cap = cv2.VideoCapture(url)
+
 
     while True:
         ret, frame = cap.read()
@@ -39,7 +41,16 @@ def main():
                 print(f"\n⚠️  LITTERED! Waste #{littered_item['waste_id']} has been thrown!")
                 print(f"   Separated for {littered_item['time_separated']:.2f} seconds")
 
-        cv2.imshow("Hand and Waste Detection with Littering Detection", frame)
+        height, width = frame.shape[:2]
+
+        scale = 0.7  # reduce to 70%
+        new_width = int(width * scale)
+        new_height = int(height * scale)
+
+        resized = cv2.resize(frame, (new_width, new_height))
+
+
+        cv2.imshow("Hand and Waste Detection with Littering Detection", resized)
 
         if cv2.waitKey(1) & 0xFF == 27:
             break
