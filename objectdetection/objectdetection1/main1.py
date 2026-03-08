@@ -14,7 +14,7 @@ def main():
     print("Littering Detection System")
     print("Press ESC to exit\n")
 
-    video_path = "photos2/bad2.mp4"
+    video_path = "photos2/good2.mp4"
     cap = cv2.VideoCapture(video_path)
 
     save_folder = "littered_frames1"
@@ -89,6 +89,9 @@ def main():
                 cv2.imwrite(filename, frame)
 
                 print("Screenshot saved:", filename)
+        else:
+            print("No littering detected at this moment.")
+
         # >>> END ADDED
 
         # Resize screen for visualization
