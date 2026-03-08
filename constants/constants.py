@@ -1,0 +1,5 @@
+VIDEO_SOURCE = "VIDEO_FILE" # Options: "WEB_CAMERA" or "VIDEO_FILE" or "IP_CAMERA"
+VIDEO_FILE_PATH = "photos/bad2.mp4" # Path to video file if VIDEO_SOURCE is "VIDEO_FILE"
+IP_CAMERA_URL = "http://192.168.1.100:8080/video"
+SAVE_FOLDER_LITTERED = "littered_frames"
+PEOPLE_IN_FRAME_FOLDER = "people_in_frame"
