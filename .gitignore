@@ -10,10 +10,3 @@ __pycache__/
 *.bak
 *.swp
 .DS_Store
-*.jpeg
-*.jpg
-*.mp4
-*.png
-*.avif
-*.pt
-*.jfif
