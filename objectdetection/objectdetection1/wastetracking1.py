@@ -23,6 +23,7 @@ class WasteTracker:
         ground_line = int(h * 0.85)
 
         hand_bboxes = []
+
         if hand_results and hand_results.multi_hand_landmarks:
             for handLms in hand_results.multi_hand_landmarks:
                 xs = [int(lm.x * w) for lm in handLms.landmark]
@@ -32,7 +33,6 @@ class WasteTracker:
         littered_now = []
 
         if not waste_detections:
-            print("No waste detected in this frame.")
             return []
 
         waste = waste_detections[0]
@@ -41,7 +41,8 @@ class WasteTracker:
         center = self.get_center(bbox)
 
         if track_id not in self.waste_objects:
-            self.waste_objects = {}
+
+            # FIXED: removed tracker reset
             self.waste_objects[track_id] = {
                 "bbox": bbox,
                 "state": "UNKNOWN",
@@ -62,6 +63,7 @@ class WasteTracker:
         downward_motion = center[1] - prev_center[1] > 10
 
         if attached:
+
             obj["state"] = "HELD"
             obj["ground_time"] = None
             obj["littered"] = False
@@ -72,14 +74,18 @@ class WasteTracker:
                 obj["state"] = "DROPPED"
 
             if center[1] > ground_line:
+
                 if obj["ground_time"] is None:
                     obj["ground_time"] = current_time
+
                 obj["state"] = "ON_GROUND"
 
             if obj["ground_time"]:
+
                 time_on_ground = current_time - obj["ground_time"]
 
                 if time_on_ground >= self.littering_time_threshold and not obj["littered"]:
+
                     obj["state"] = "LITTERED"
                     obj["littered"] = True
 
@@ -95,6 +101,11 @@ class WasteTracker:
         return littered_now
 
     def draw(self, frame):
+
+        h, w, _ = frame.shape
+        ground_line = int(h * 0.85)
+
+        cv2.line(frame, (0, ground_line), (w, ground_line), (255, 255, 0), 2)
 
         for track_id, obj in self.waste_objects.items():
 
@@ -122,3 +133,5 @@ class WasteTracker:
                         2)
 
         return frame
+
+

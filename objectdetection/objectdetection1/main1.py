@@ -1,4 +1,6 @@
 import cv2
+import os            # >>> ADDED
+import time          # >>> ADDED
 
 from waste1 import detectwaste
 from wastetracking1 import WasteTracker
@@ -12,21 +14,29 @@ def main():
     print("Littering Detection System")
     print("Press ESC to exit\n")
 
-    video_path = "photos2/bad.mp4"
+    video_path = "photos2/bad2.mp4"
     cap = cv2.VideoCapture(video_path)
+
+    save_folder = "littered_frames1"
+    save_folder1 = "people_in_frame"# >>> ADDED
+    os.makedirs(save_folder, exist_ok=True) # >>> ADDED
 
     waste_tracker = WasteTracker(
         separation_threshold=80,
         littering_time_threshold=5.0
     )
-    second=0
+
+    second = 0
+
+    screenshot_taken = False   # >>> ADDED (for 3rd second screenshot)
+
     while True:
 
         cap.set(cv2.CAP_PROP_POS_MSEC, second * 200)
         ret, frame = cap.read()
+
         if not ret:
             break
-
 
         # BIN ROI
         roi_results = detectroi(frame)
@@ -42,6 +52,7 @@ def main():
 
         # Ignore waste inside bin
         filtered_waste = []
+
         for waste in waste_boxes:
             if not is_inside_roi(waste["bbox"], roi_results.box):
                 filtered_waste.append(waste)
@@ -53,6 +64,32 @@ def main():
         )
 
         frame = waste_tracker.draw(frame)
+
+        # >>> ADDED (3rd second screenshot)
+        if second == 3 and not screenshot_taken:
+
+            filename = f"{save_folder1}/records.jpg"
+
+            cv2.imwrite(filename, frame)
+
+            print("Screenshot captured at 3rd second")
+
+            screenshot_taken = True
+        # >>> END ADDED
+
+        # >>> ADDED (litter detection screenshot)
+        if littered_now:
+
+            for obj in littered_now:
+
+                print("LITTERING DETECTED")
+
+                filename = f"{save_folder}/litter_{obj['id']}_{int(time.time())}.jpg"
+
+                cv2.imwrite(filename, frame)
+
+                print("Screenshot saved:", filename)
+        # >>> END ADDED
 
         # Resize screen for visualization
         screen_w = 1280
@@ -69,7 +106,7 @@ def main():
         if cv2.waitKey(1) & 0xFF == 27:
             break
 
-        second=second+1
+        second = second + 1
 
     cap.release()
     cv2.destroyAllWindows()
@@ -77,4 +114,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 

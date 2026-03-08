@@ -10,11 +10,11 @@ def detectroi(frame):
 
     h, w, _ = frame.shape
 
-    x1 = int(w * 0.06)
-    x2 = int(w * 0.32)
+    x1 = int(w * 0.72)
+    x2 = int(w * 0.95)
 
-    y1 = int(h * 0.62)
-    y2 = int(h * 0.90)
+    y1 = int(h * 0.58)
+    y2 = int(h * 0.81)
 
     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 3)
 

@@ -3,8 +3,7 @@ import gc
 
 model = YOLO("yolov8s.pt")
 
-target_objects = ["bottle", "remote","frisbee","tennis racket"]
-
+target_objects = ["bottle", "remote","frisbee","tennis racket","bowl","box","vase","book","skateboard"]
 conf_threshold = 0.1
 img_size = 960
 
