@@ -1,5 +1,6 @@
 import time
 import cv2
+from collections import deque
 
 
 class WasteTracker:
@@ -8,6 +9,8 @@ class WasteTracker:
         self.separation_threshold = separation_threshold
         self.littering_time_threshold = littering_time_threshold
         self.waste_objects = {}
+        self.littered_objects = set()
+        self.next_id = 0
 
     def get_center(self, bbox):
         x1, y1, x2, y2 = bbox
@@ -30,78 +33,106 @@ class WasteTracker:
                 ys = [int(lm.y * h) for lm in handLms.landmark]
                 hand_bboxes.append((min(xs), min(ys), max(xs), max(ys)))
 
-        littered_now = []
+        new_littered = []
 
         if not waste_detections:
             return []
 
-        waste = waste_detections[0]
-        track_id = waste["id"]
-        bbox = waste["bbox"]
-        center = self.get_center(bbox)
+        updated_ids = set()
 
-        if track_id not in self.waste_objects:
+        for waste in waste_detections:
+            bbox = waste["bbox"]
+            center = self.get_center(bbox)
 
-            # FIXED: removed tracker reset
-            self.waste_objects[track_id] = {
-                "bbox": bbox,
-                "state": "UNKNOWN",
-                "prev_center": center,
-                "ground_time": None,
-                "littered": False
-            }
+            # Find closest existing object
+            min_dist = float('inf')
+            closest_id = None
+            for obj_id, obj in self.waste_objects.items():
+                if obj["centroid_history"]:
+                    history = list(obj["centroid_history"])
+                    weights = [0.1 * (i + 1) for i in range(len(history))]
+                    total_weight = sum(weights)
+                    avg_x = sum(c[0] * w for c, w in zip(history, weights)) / total_weight
+                    avg_y = sum(c[1] * w for c, w in zip(history, weights)) / total_weight
+                    dist = self.distance(center, (avg_x, avg_y))
+                    if dist < min_dist:
+                        min_dist = dist
+                        closest_id = obj_id
 
-        obj = self.waste_objects[track_id]
-        prev_center = obj["prev_center"]
+            if min_dist < self.separation_threshold and closest_id is not None:
+                track_id = closest_id
+            else:
+                track_id = self.next_id
+                self.next_id += 1
+                self.waste_objects[track_id] = {
+                    "centroid_history": deque(maxlen=10),
+                    "bbox": bbox,
+                    "state": "UNKNOWN",
+                    "ground_time": None,
+                    "littered": False,
+                    "miss_count": 0
+                }
 
-        attached = False
-        for hand_bbox in hand_bboxes:
-            if self.distance(center, self.get_center(hand_bbox)) < self.separation_threshold:
-                attached = True
-                break
+            updated_ids.add(track_id)
 
-        downward_motion = center[1] - prev_center[1] > 10
+            obj = self.waste_objects[track_id]
+            obj["centroid_history"].append(center)
 
-        if attached:
+            # Check if previously littered and now above ground
+            if obj["littered"] and center[1] < ground_line:
+                obj["littered"] = False
+                self.littered_objects.discard(track_id)
 
-            obj["state"] = "HELD"
-            obj["ground_time"] = None
-            obj["littered"] = False
+            attached = False
+            for hand_bbox in hand_bboxes:
+                if self.distance(center, self.get_center(hand_bbox)) < self.separation_threshold:
+                    attached = True
+                    break
 
-        else:
+            prev_center = obj["centroid_history"][-2] if len(obj["centroid_history"]) > 1 else center
+            downward_motion = center[1] - prev_center[1] > 10
 
-            if obj["state"] == "HELD" and downward_motion:
-                obj["state"] = "DROPPED"
+            if attached:
+                obj["state"] = "HELD"
+                obj["ground_time"] = None
+                obj["littered"] = False
+                if track_id in self.littered_objects:
+                    self.littered_objects.discard(track_id)
+            else:
+                if obj["state"] == "HELD" and downward_motion:
+                    obj["state"] = "DROPPED"
 
-            if center[1] > ground_line:
+                if center[1] > ground_line:
+                    if obj["ground_time"] is None:
+                        obj["ground_time"] = current_time
+                    if obj["littered"]:
+                        obj["state"] = "LITTERED"
+                    else:
+                        obj["state"] = "ON_GROUND"
+                    print(f"Object ID {track_id} on ground at time {obj['ground_time']}")
 
-                if obj["ground_time"] is None:
-                    obj["ground_time"] = current_time
+                if obj["ground_time"]:
+                    time_on_ground = current_time - obj["ground_time"]
+                    if time_on_ground >= self.littering_time_threshold and not obj["littered"]:
+                        obj["state"] = "LITTERED"
+                        obj["littered"] = True
+                        self.littered_objects.add(track_id)
+                        new_littered.append({"id": track_id, "bbox": bbox})
 
-                obj["state"] = "ON_GROUND"
+            obj["bbox"] = bbox
 
-            if obj["ground_time"]:
+        # Remove objects not detected for 10 consecutive frames
+        for obj_id in list(self.waste_objects.keys()):
+            if obj_id not in updated_ids:
+                self.waste_objects[obj_id]["miss_count"] += 1
+                if self.waste_objects[obj_id]["miss_count"] >= 10:
+                    if obj_id in self.littered_objects:
+                        self.littered_objects.discard(obj_id)
+                    del self.waste_objects[obj_id]
+            else:
+                self.waste_objects[obj_id]["miss_count"] = 0
 
-                time_on_ground = current_time - obj["ground_time"]
-
-                if time_on_ground >= self.littering_time_threshold and not obj["littered"]:
-
-                    obj["state"] = "LITTERED"
-                    obj["littered"] = True
-
-                    littered_now.append({
-                        "id": track_id,
-                        "bbox": bbox,
-                        "time": time_on_ground
-                    })
-
-        obj["bbox"] = bbox
-        obj["prev_center"] = center
-
-        print("Littered now:", littered_now)
-        print("littered : ", obj["littered"])
-
-        return littered_now
+        return new_littered
 
     def draw(self, frame):
 

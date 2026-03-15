@@ -91,7 +91,7 @@ def main():
 
                 print("LITTERING DETECTED")
 
-                filename = f"{littered_images}/litter_{obj['id']}_{int(time.time())}.jpg"
+                filename = f"{littered_images}/litter_{obj['id']}.jpg"
 
                 cv2.imwrite(filename, frame)
 
